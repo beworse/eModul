@@ -1,6 +1,8 @@
 #/usr/bin/env python
 
+from collections import namedtuple
 from dataclasses import dataclass
+import logging
 
 from selenium import webdriver
 from selenium.common import exceptions
@@ -8,13 +10,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 
-from typing import Tuple
-import logging
+from typing import Tuple, List
+
+NamedElement = namedtuple("WebElement", "name element")
 
 class eModulBase:
     def __init__(self, driver = None, implicitly_wait: int = 3):
         self.__init_logger()
-       
+
         if driver != None:
             self._driver = driver
         else:
@@ -31,16 +34,16 @@ class eModulBase:
 
     def _get_element(self, name: str) -> WebElement:
         return self._driver.find_element(By.CLASS_NAME, name)
-       
+
     def _get_elements(self, name: str) -> WebElement:
         return self._driver.find_elements(By.CLASS_NAME, name)
 
     def _get_url(self) -> str:
         return self._driver.command_executor._url
-   
+
     def __init_logger(self):
         self._log = logging.getLogger(self.__class__.__name__)
-   
+
     def _set_element_value(self, name, value: str) -> WebElement:
         element = self._driver.find_element(By.NAME, name)
         element.send_keys(value)
@@ -55,6 +58,8 @@ class eModulLoginPanelClassNames:
     loginButton : str = "login-box__button"
 
 class eModulLoginPanel(eModulBase):
+    _logged: bool = False
+
     def __init__(self, webdriver = None):
         super().__init__(webdriver)
         self.init_page("https://emodul.pl/login")
@@ -63,20 +68,25 @@ class eModulLoginPanel(eModulBase):
         self._set_element_value("username", user)
         self._set_element_value("password", password)
         self._click_element(eModulLoginPanelClassNames.loginButton)
-        self.verify_login()
-       
+        if not self.verify_login():
+            raise Exception("Couldn't loging. For more details check logs.")
+
+    def is_logged(self) -> bool:
+        return self._logged
+
     def verify_login(self) -> bool:
-        # TODO: check url
+        #TO-DO: BUG same class is used to inform user that something is wrong
+        #       with device on with module.
         try:
             btn = self._get_element(eModulLoginPanelClassNames.alertButton)\
                          .get_attribute("value")
             error = self._get_element(eModulLoginPanelClassNames.alertMessage)\
                         .text
-            self._log.error(f"error")
-            self._log.info(f"Available button: {btn}")
+            self._log.error(f"\"{error}\". Available button: {btn}")
             return False
         except exceptions.NoSuchElementException:
-            self._log.info(f"login success")
+            self._log.info("Succefully logged.")
+            self._logged = True
             return True
 
     def get_languages(self) -> Tuple[str]:
@@ -85,7 +95,7 @@ class eModulLoginPanel(eModulBase):
         elements = self._get_elements(eModulLoginPanelClassNames.languageElemnt)
         languages =[language.text for language in elements]
         current_language.click()
-        self._log.info(f"Available Languages: {languages}")
+        self._log.info(f"Available languages: {languages}")
         return tuple(languages)
 
     def set_language(self, language: str) -> bool:
@@ -104,24 +114,28 @@ class eModulLoginPanel(eModulBase):
 class eModulBaseModuleClassNames:
     moduleSelectionButton : str = "module-selection__name"
     moduleSelectionElement : str = "module-selection-list__element"
+    moduleSelectionIcon : str = "module-selection-list__icon"
 
+class eModulBaseModule(eModulLoginPanel):
+    available_modules : List[NamedElement] = []
+    selected_module : NamedElement = None
 
-from collections import namedtuple
-#TODO: selected look incorrect
-#TODO: printing this it looks terrible in logs
-Selected = namedtuple("Selected", "name element")
-
-class eModulBaseModule(eModulBase):
-    available_modules : [Selected] = []
-    selected_module : Selected = None
-
-    def __init__(self, webdriver = None):
+    def __init__(self, webdriver: webdriver = None):
         super().__init__(webdriver)
+
+    def get_module_names(self) -> str:
+        if len(self.available_modules) == 0:
+            if self.selected_module != None:
+                return str([self.select_module.name])
+            self._log.warning("Method get_module_names called before"
+                " read_available_modules.")
+            return str(None)
+        return str([module.name for module in self.available_modules])
 
     def read_available_modules(self) -> bool:
         if len(self.available_modules) > 0:
-            self._log.info(f"No need to read modules again. Available modules:"\
-                " {self.available_modules}")
+            self._log.info(f"No need to read modules again. Available modules:"
+                " {self.get_module_names()}")
             return True
         try:
             self._click_element(eModulBaseModuleClassNames\
@@ -130,27 +144,27 @@ class eModulBaseModule(eModulBase):
             elements = self._get_elements(eModulBaseModuleClassNames\
                 .moduleSelectionElement)
             self.available_modules = [\
-                Selected(module.text, module)\
+                NamedElement(module.text, module)\
                 for module in elements\
                 if len(module.text) > 0]
-            self._log.info(f"Available modules: {self.available_modules}.")
+            self._log.info(f"Available modules: {self.get_module_names()}.")
             for element in elements:
                 if len(element.text) == 0:
                     continue
-                self._log.info(f"type: {element}")
-                #TODO: move module-slection ...
-                selected = element.find_element(By.CLASS_NAME, "module-selection-list__icon") \
+                selected = element.find_element(By.CLASS_NAME,
+                    eModulBaseModuleClassNames.moduleSelectionIcon) \
                     .get_attribute("src")
                 if "selected.svg" in selected:
-                    self.selected_module = Selected(element.text, element)
-                    self._log.info(f"Selected element: {self.selected_module}")
+                    self.selected_module = NamedElement(element.text, element)
+                    self._log.info(f"Currently smodule module:"
+                        f" {self.selected_module.name}")
                     element.click()
                     return True
             self._log.error("Couldn't find selected module")
             return False
         except exceptions.NoSuchElementException:
-            self._log.error("Couldn't get available modules. Probably you" \
-                " have only one module available. Use method:" \
+            self._log.error("Couldn't get available modules. Probably you"
+                " have only one module available. Use method:"
                 " select_module_forced.")
             return False
 
@@ -159,47 +173,38 @@ class eModulBaseModule(eModulBase):
         toSelect = [module for module in self.available_modules \
             if name.lower() in module.name.lower()]
         if len(toSelect) == 0:
-            self._log.error(f"Module: {name} not found")
+            self._log.error(f"Module: {name} not found!")
             return False
         elif len(toSelect) > 1:
             self._log.error(f"Module: {name} find multiple times try to be more specific.")
             return False
         toSelect = toSelect[0]
-        self._log.info(f"Selecting module {toSelect.name}")
+        self._log.info(f"Chnage selected module to: {toSelect.name}.")
         self._click_element(eModulBaseModuleClassNames.moduleSelectionButton)
         toSelect.element.click()
         return True
 
-    def select_module_forced(self, module) -> None:
-        self._log.info(f"Module set!")
-        pass
-
-##########
-# docs
-#################
-# - https://www.selenium.dev/selenium/docs/api/py/webdriver_remote/selenium.webdriver.remote.webelement.html
-# - https://www.selenium.dev/selenium/docs/api/py/webdriver/selenium.webdriver.common.by.html
-# - https://stackoverflow.com/questions/8344776/can-selenium-interact-with-an-existing-browser-session
-# - https://stackoverflow.com/questions/71601442/perform-mouse-actions-in-selenium-python
-# - https://stackoverflow.com/questions/47861813/how-can-i-reconnect-to-the-browser-opened-by-webdriver-with-selenium
+    def select_module_forced(self, moduleName: str) -> None:
+        self.selected_module = NamedElement(moduleName, None)
+        self._log.info("Module {moduleName} set by force.")
 
 def configure_logs():
+    #TO-DO: current approach is bad, because it set logs level for selenium as
+    #       well
     format = '%(asctime)s %(name)s %(levelname)s: %(message)s'
     logging.basicConfig(
         format=format,
         level=logging.INFO
     )
 
-def main(user: str = "test", password: str = "test" , language: str = "Polski", module: str = "pellet"):
+def main():
     configure_logs()
 
-    em = eModulLoginPanel()
-    #languages = em.get_languages();
-    em.set_language(language)
-    em.login(user, password)
-
-    em = eModulBaseModule(em._driver)
-    em.select_module(module)
+    em = eModulBaseModule()
+    em.get_languages();
+    em.set_language("Polski")
+    em.login("test", "test")
+    em.select_module("Pellet")
 
 if __name__ == "__main__":
     main()
