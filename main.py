@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 
+import time
 from typing import Tuple, List
 
 NamedElement = namedtuple("WebElement", "name element")
@@ -34,6 +35,25 @@ class eModulBase:
 
     def _get_element(self, name: str) -> WebElement:
         return self._driver.find_element(By.CLASS_NAME, name)
+    
+    def _get_elemnt_from_element(self, name:str, element:WebElement, mandatory: bool):
+        try:
+            sub_element = element.find_element(By.CLASS_NAME, name)
+            return sub_element
+        except exceptions.NoSuchElementException:
+            if mandatory:
+                raise exceptions.NoSuchElementException()
+            self._log.warning(f"No element: {name} return None")
+            return None
+
+    def _get_text_from_element(self, name:str, element:WebElement, mandatory: bool):
+        try:
+            sub_element = element.find_element(By.CLASS_NAME, name)
+            return sub_element.text
+        except exceptions.NoSuchElementException:
+            if mandatory:
+                raise exceptions.NoSuchElementException()
+            return ""
 
     def _get_elements(self, name: str) -> WebElement:
         return self._driver.find_elements(By.CLASS_NAME, name)
@@ -48,6 +68,7 @@ class eModulBase:
         element = self._driver.find_element(By.NAME, name)
         element.send_keys(value)
         return element
+
 
 @dataclass
 class eModulLoginPanelClassNames:
@@ -182,11 +203,38 @@ class eModulBaseModule(eModulLoginPanel):
         self._log.info(f"Chnage selected module to: {toSelect.name}.")
         self._click_element(eModulBaseModuleClassNames.moduleSelectionButton)
         toSelect.element.click()
+        #TO-DO: wait for webpage load not with sleep ...
+        self._log.info(f"Loading new selected module {name} home elements.")
+        time.sleep(5)
         return True
 
     def select_module_forced(self, moduleName: str) -> None:
         self.selected_module = NamedElement(moduleName, None)
         self._log.info("Module {moduleName} set by force.")
+
+    #TO_DO: new class?
+    def get_home_values(self):
+        status_elements = self._get_elements("tile__status")
+        for status_element in status_elements:
+            name = self._get_text_from_element("tile__subtitle", status_element, True)
+
+            #settings_button = self._get_elemnt_from_element("tile__setting", status_element, False)
+            #TO-DO: Additional check is required all status_elemnts has this class
+            #settings_button = None
+            #has_setting_button = True if (settings_button != None) else False
+
+            current_value = self._get_text_from_element("tile__value-current", status_element, False)
+            # is it temperature value ?
+            if current_value != "":
+                set_value = self._get_text_from_element("tile__value-set-temp", status_element, False)
+            else:
+                current_value = self._get_text_from_element("settings-tile-svg-stroke", status_element, False)
+                if current_value != "":
+                    set_value = "100%"
+                else:
+                    set_value = ""
+            self._log.info(f"{name}: {current_value=}, {set_value=}")
+            #self._log.info(f"{name}: {current_value=}, {set_value=}, {has_setting_button=}.")
 
 def configure_logs():
     #TO-DO: current approach is bad, because it set logs level for selenium as
@@ -205,6 +253,7 @@ def main():
     em.set_language("Polski")
     em.login("test", "test")
     em.select_module("Pellet")
+    em.get_home_values()
 
 if __name__ == "__main__":
     main()
