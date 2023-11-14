@@ -1,6 +1,8 @@
 #/usr/bin/env python
 from logging import basicConfig, INFO
 from eModulBaseModule import eModulBaseModule
+from eModulTranslations import eModulTranslations
+
 
 def configure_logs():
     #TO-DO: current approach is bad, because it set logs level for selenium as
@@ -10,12 +12,15 @@ def configure_logs():
 
 def main():
     configure_logs()
+    lang = "Polski"
+    module = "Pellet"
+    translation = eModulTranslations("./data/").get_translation_module(lang, module)
 
     em = eModulBaseModule()
     em.get_languages();
-    em.set_language("Polski")
+    em.set_language(lang)
     em.login("test", "test")
-    em.select_module("Pellet")
+    em.select_module(module)
     em.get_home_values()
 
 if __name__ == "__main__":

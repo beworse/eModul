@@ -1,0 +1,23 @@
+#TO-DO: Check missing fields, add translation.
+language: Polski
+---
+module: Pellet
+translations:
+  Built-in valve 1: Built-in valve 1
+  CH pump: CH pump
+  CH temperature: CH temperature
+  Company: Company
+  Controller state: Controller state
+  DHW pump: DHW pump
+  DHW temperature: DHW temperature
+  External temperature: External temperature
+  Fan rotation: Fan rotation
+  Feeder: Feeder
+  Fire sensor: Fire sensor
+  Flue gas temp.: Flue gas temp.
+  Fuel supply: Fuel supply
+  Module version: Module version
+  Operating mode: Operating mode
+  Parallel pumps: Parallel pumps
+  Version number: Version number
+...
