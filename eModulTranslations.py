@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
 import os
@@ -74,5 +75,35 @@ class eModulTranslations:
             l = self.load_language(file)
             languages.update(l)
         self._log.info(f"Loaded languages: {languages.keys()}")
-        self._log.debug(f"Full dictionary:\n{yaml.dump(languages)}")
+        self._log.debug(f"Full dictionary:\n{yaml.dump(languages, allow_unicode=True)}")
         return languages
+
+@dataclass
+class PelletTranslations:
+  additional_pump: str = "Additional pump"
+  additional_valve_1: str = "Additional valve 1"
+  additional_valve_2: str = "Additional valve 2"
+  built_in_valve_1: str = "Built-in valve 1"
+  built_in_valve_2: str = "Built-in valve 2"
+  ch_pump: str = "CH pump"
+  ch_temperature: str = "CH temperature"
+  company: str = "Company"
+  controller_state: str = "Controller state"
+  current_room_temperature: str = "Current room temperature"
+  dhw_pump: str = "DHW pump"
+  dhw_temperature: str = "DHW temperature"
+  disinfection: str = "Disinfection"
+  external_temperature: str = "External temperature"
+  fan_rotation: str = "Fan rotation"
+  feeder: str = "Feeder"
+  fire_sensor: str = "Fire sensor"
+  flue_gas_temp: str = "Flue gas temp"
+  fuel_supply: str = "Fuel supply"
+  heater: str = "Heater"
+  module_version: str = "Module version"
+  operating_mode: str = "Operating mode"
+  parallel_pumps: str = "Parallel pumps"
+  version_number: str = "Version number"
+  house_heating: str = "House heating"
+  boiler_priority: str = "Boiler priority"
+  summer_mode: str = "Summer mode"

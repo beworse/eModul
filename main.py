@@ -1,7 +1,8 @@
 #/usr/bin/env python
+from dataclasses import fields
 from logging import basicConfig, INFO
 from eModulBaseModule import eModulBaseModule
-from eModulTranslations import eModulTranslations
+from eModulTranslations import eModulTranslations, PelletTranslations
 
 
 def configure_logs():
@@ -15,6 +16,8 @@ def main():
     lang = "Polski"
     module = "Pellet"
     translation = eModulTranslations("./data/").get_translation_module(lang, module)
+    pellet_translation = PelletTranslations(**translation)
+    print(pellet_translation)
 
     em = eModulBaseModule()
     em.get_languages();

@@ -1,23 +1,32 @@
-#TO-DO: Check missing fields, add translation.
 language: Polski
 ---
 module: Pellet
 translations:
-  Built-in valve 1: Built-in valve 1
-  CH pump: CH pump
-  CH temperature: CH temperature
-  Company: Company
-  Controller state: Controller state
-  DHW pump: DHW pump
-  DHW temperature: DHW temperature
-  External temperature: External temperature
-  Fan rotation: Fan rotation
-  Feeder: Feeder
-  Fire sensor: Fire sensor
-  Flue gas temp.: Flue gas temp.
-  Fuel supply: Fuel supply
-  Module version: Module version
-  Operating mode: Operating mode
-  Parallel pumps: Parallel pumps
-  Version number: Version number
+  additional_pump: Pompa dodatkowa
+  additional_valve_1: Zawór dodatkowy 1
+  additional_valve_2: Zawór dodatkowy 2
+  built_in_valve_1: Zawór wbudowany 1
+  built_in_valve_2: Zawór wbudowany 2
+  ch_pump: Pompa CO
+  ch_temperature: Temperatura CO
+  company: Firma
+  controller_state: Stan sterownika
+  current_room_temperature: Temperatura pokoju bieżąca
+  dhw_pump: Pompa CWU
+  dhw_temperature: Temperatura C.W.U.
+  disinfection: Dezynfekcja
+  external_temperature: Temperatura zewnętrzna
+  fan_rotation: Obroty wentylatora
+  feeder: Podajnik
+  fire_sensor: Czujnik ognia
+  flue_gas_temp: Temperatura spalin
+  fuel_supply: Zapas paliwa
+  heater: Grzałka
+  module_version: Wersja modułu
+  operating_mode: Tryb pracy
+  parallel_pumps: Pompy równoległe
+  version_number: Numer wersji
+  house_heating: Ogrzewanie domu
+  boiler_priority: Priorytet bojlera
+  summer_mode: Tryb letni
 ...
